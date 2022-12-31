@@ -101,38 +101,47 @@ def nextSteps(state, startPositionOf0, currentAllowedMoves) -> list:
 def solveHamming(state):
     gScore = 0
     fScores = list()
-    closedStates = list()
-    openStates = list()
-    openStates.append(state)
-    nextState = state
-    currentState = nextState
+    processedStates = list()
+    processedStates.append(state)
+    openStates = dict()
+    heuristicValueOfState = hammingDistance(state)
+    openStates.update({state, heuristicValueOfState})
+    currentState = state
     while not (numpy.array_equal(currentState, goalState)):
+        print("currentState:\n", currentState)
         startPositionOf0 = findZero(currentState)
-        currentAllowedMoves = allowedMoves.get(startPositionOf0)
-        nextAllowedSteps = nextSteps(currentState, startPositionOf0, currentAllowedMoves)
-        openStates.append(nextAllowedSteps)
-        for step in nextAllowedSteps:
-            hScore = hammingDistance(step)
-            print("Where")
+        currentPossibleMoves = allowedMoves.get(startPositionOf0)
+        nextPossibleStates = nextSteps(currentState, startPositionOf0, currentPossibleMoves)
+        for state in nextPossibleStates:
+            print("possibility:\n", state)
+            index = 0
+            for processedState in processedStates:
+                if numpy.array_equal(state, processedState):
+                    print("State in processedStates -> to be removed:\n", nextPossibleStates[index])
+                    del nextPossibleStates[index]
+            index += 1
+        print("nextPossibleStates:\n", nextPossibleStates)
+        for state in nextPossibleStates:
+            hScore = hammingDistance(state)
             fScores.append(hScore + gScore)
-            print("the")
-            nextState = nextAllowedSteps[fScores.index(min(fScores))]
-            print("fuck")
-        if not(currentState in closedStates):
-            closedStates.append(currentState)
+            if not (state in openStates):
+                openStates.update({state, hScore + gScore})
+            else:
+                if openStates.get(state) > hScore + gScore:
+                    openStates.update({state, hScore + gScore})
+        if not (currentState in processedStates):
+            processedStates.append(currentState)
+            openStates.pop(currentState)
         else:
-            while not(currentState in closedStates):
-                nextAllowedSteps.remove(nextState)
-                nextState = nextAllowedSteps[fScores.index(min(fScores))]
-            if not (currentState in closedStates):
-                closedStates.append(currentState)
-        print("Am")
+            while not (currentState in processedStates):
+                nextState = openStates[fScores.index(min(fScores))]
+            if not (currentState in processedStates):
+                processedStates.append(currentState)
+        print("nextState chosen:\n", nextState)
+        processedStates.append(nextState)
         gScore += 1
-        print("I")
         fScores.clear()
-        print("?")
         currentState = nextState
-        print(nextState)
 
 
 def solveManhatten(state):
@@ -180,14 +189,15 @@ def solveWithHeuristic(state, heuristic):
     fScores = list()
     processedStates = list()
     processedStates.append(state)
-    openStates = list()
-    openStates.append(state)
+    openStates = dict()
+    heuristicValueOfState = heuristic(state)
+    openStates.update({state, heuristicValueOfState})
     currentState = state
     while not (numpy.array_equal(currentState, goalState)):
         print("currentState:\n", currentState)
         startPositionOf0 = findZero(currentState)
-        currentPossibleMoves = possibleMoves.get(startPositionOf0)
-        nextPossibleStates = nextStates(currentState, startPositionOf0, currentPossibleMoves)
+        currentPossibleMoves = allowedMoves.get(startPositionOf0)
+        nextPossibleStates = nextSteps(currentState, startPositionOf0, currentPossibleMoves)
         for state in nextPossibleStates:
             print("possibility:\n", state)
             index = 0
@@ -197,11 +207,22 @@ def solveWithHeuristic(state, heuristic):
                     del nextPossibleStates[index]
             index += 1
         print("nextPossibleStates:\n", nextPossibleStates)
-        openStates.append(nextPossibleStates)
         for state in nextPossibleStates:
             hScore = heuristic(state)
             fScores.append(hScore + gScore)
-        nextState = nextPossibleStates[fScores.index(min(fScores))]
+            if not (state in openStates):
+                openStates.update({state, hScore + gScore})
+            else:
+                if openStates.get(state) > hScore + gScore:
+                    openStates.update({state, hScore + gScore})
+        if not (currentState in processedStates):
+            processedStates.append(currentState)
+            openStates.pop(currentState)
+        else:
+            while not (currentState in processedStates):
+                nextState = openStates[fScores.index(min(fScores))]
+            if not (currentState in processedStates):
+                processedStates.append(currentState)
         print("nextState chosen:\n", nextState)
         processedStates.append(nextState)
         gScore += 1
@@ -235,9 +256,7 @@ if __name__ == '__main__':
 #        hammingDistance(state)
     hammingDistanceFunc = hammingDistance
     manhattenDistanceFunc = manhattenDistance
-    heuristicList = list()
-    heuristicList.append(hammingDistanceFunc)
-    heuristicList.append(manhattenDistanceFunc)
+    heuristicList = [hammingDistanceFunc, manhattenDistanceFunc]
     aStar(startStates, heuristicList)
     print("STATISTICS FOR ", len(calculationTimeManhattenDistance), "RUNS:")
     print("*** Hamming Distance ***")
