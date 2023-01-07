@@ -205,8 +205,8 @@ class Multiple_puzzle_solver:
         self.execution_time = list()
 
     def print_statistics(self):
-        print("\nStatistics after", self.permutations, "permutations (mean and standard deviation):")
-        print(("States explored: {} " u"\u00B1" " {}"
+        print("\nStatistics after", self.permutations, "permutations (mean " u"\u00B1" " standard deviation):")
+        print(("Nodes explored: {} " u"\u00B1" " {}"
                "\nSearch time [seconds]: {} " u"\u00B1" " {}").format(
             int(round(statistics.mean(self.nodes_explored), 0)), int(round(statistics.stdev(self.nodes_explored), 0)),
             round(statistics.mean(self.execution_time), 2), round(statistics.stdev(self.execution_time), 2)))
