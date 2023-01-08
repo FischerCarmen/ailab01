@@ -1,7 +1,6 @@
 import random
 import statistics
 import time
-import heapq
 import numpy
 
 goalState = numpy.array(((0, 1, 2), (3, 4, 5), (6, 7, 8)))
@@ -22,7 +21,7 @@ allowedMoves = dict([((0, 0), ((0, 1), (1, 0))),
 
 # generates stated number of start states to solve
 def generateStates(states: int) -> list:
-    print("Number of states:", states)
+    #print("Number of states:", states)
     listOfStates = list()
     appendedState = 0
 
@@ -39,7 +38,7 @@ def generateStates(states: int) -> list:
         if isSolvable(newState):
             listOfStates.append(newState)
             appendedState += 1
-    print(listOfStates)
+    #print(listOfStates)
     return listOfStates
 
 
@@ -60,7 +59,7 @@ def hammingDistance(state) -> int:
             if state[i][ii] != goalState[i][ii]:
                 distance += 1
 
-    print("Hamming Distance: ", distance)
+    #print("Hamming Distance: ", distance)
     return distance
 
 
@@ -85,7 +84,7 @@ def manhattenDistance(state) -> int:
             goal = coordinatesDict.get(value)
             distance += (abs(i-goal[0]) + abs(ii-goal[1]))
 
-    print("Manhatten Distance: ", distance)
+    #print("Manhatten Distance: ", distance)
     return distance
 
 
@@ -102,7 +101,7 @@ def nextSteps(state, startPositionOf0, currentAllowedMoves) -> list:
     nextCalculatedSteps = list()
 
     for move in currentAllowedMoves:
-        print(move)
+        #print(move)
         newState = state.copy()
         # phyton way of saying swap two objects a, b = b, a
         newState[startPositionOf0[0]][startPositionOf0[1]], newState[move[0]][move[1]] = newState[move[0]][move[1]], newState[startPositionOf0[0]][startPositionOf0[1]]
@@ -110,37 +109,48 @@ def nextSteps(state, startPositionOf0, currentAllowedMoves) -> list:
 
     return nextCalculatedSteps
 
-
+def isNotInList(list, value) -> bool:
+    for item in list:
+        if numpy.array_equal(item, value):
+            return False
+    return True
 def solveWithHeuristic(state, heuristic):
     gScore = 0
-    openStates = []
-    heapq.heapify(openStates)
+    openStates = list()
     closedStates = list()
     currentState = state
+    currentFScore = gScore + heuristic(currentState)
+    openStates.append((currentFScore, currentState))
 
     while True:
-        if heuristic(currentState) == 0:
-            lenOpenStates = 0
-            while state in openStates:
-                lenOpenStates += 1
-                heapq.heappop(openStates)
 
+        if heuristic(currentState) == 0:
             if heuristic == hammingDistance:
-                NodesExpandedHammingDistance.append(lenOpenStates + len(closedStates))
+                NodesExpandedHammingDistance.append(len(openStates) + len(closedStates))
             else:
-                NodesExpandedManhattenDistance.append(lenOpenStates + len(closedStates))
+                NodesExpandedManhattenDistance.append(len(openStates) + len(closedStates))
             return
 
         positionOf0 = findZero(currentState)
         allowedNextSteps = nextSteps(currentState, positionOf0, allowedMoves[positionOf0])
 
         for step in allowedNextSteps:
-            if not(step in closedStates):
+            if isNotInList(closedStates, step):
                 fScore = gScore + heuristic(step)
-                heapq.heappush(openStates, (fScore, step))
+                for state in openStates:
+                    if numpy.array_equal(step, state[1]):
+                        if state[0] > fScore:
+                            openStates.remove((state[0], state[1]))
+                            openStates.append((fScore, step))
+                openStates.append((gScore + heuristic(step), step))
 
-        print(heapq.heappop(openStates)[1])
-        currentState = heapq.heappop(openStates)[1]
+
+        closedStates.append(currentState)
+        openStates.remove((currentFScore, currentState))
+        openStates.sort(key=lambda x: x[0], reverse=False)
+        currentState = openStates[0][1]
+        currentFScore = openStates[0][0]
+
 
 
 # runs the A* Algorithm
